@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { toPng } from "html-to-image";
 import { Result, Tier } from "@/lib/types";
 import { Logo } from "./ui/Branding";
@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 // HEX Colors for maximum compatibility
 const CARD_COLORS = {
   dark: "#0a0510",
-  card: "#120826",
+  card: "#0f0720",
   white: "#ffffff",
   violet: "#8b5cf6",
   pink: "#ec4899",
@@ -73,18 +73,24 @@ export function ResultCard({ result, userName }: ResultCardProps) {
     try {
       setDownloading(true);
       
-      // Wait for everything to settle
-      await new Promise(r => setTimeout(r, 100));
-
+      // Fixed aspect ratio capture (4:5 vertical)
       const dataUrl = await toPng(cardRef.current, {
         cacheBust: true,
-        pixelRatio: 3, // High-DPI export
+        canvasWidth: 1080,
+        canvasHeight: 1350,
+        pixelRatio: 1,
         backgroundColor: CARD_COLORS.dark,
         style: {
-          // Force stable styles during capture
           transform: 'scale(1)',
-          borderRadius: '48px',
+          borderRadius: '40px',
           background: CARD_COLORS.card,
+          width: '1080px',
+          height: '1350px',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '100px 60px 120px 60px'
         }
       });
 
@@ -96,8 +102,7 @@ export function ResultCard({ result, userName }: ResultCardProps) {
       setDownloading(false);
     } catch (err) {
       console.error("Save error:", err);
-      // Fallback alert
-      alert("Uh oh! The oracle failed to save. Please take a screenshot! 📸");
+      alert("oracle failed! Screenshot it for now! 📸");
       setDownloading(false);
     }
   };
@@ -124,84 +129,92 @@ export function ResultCard({ result, userName }: ResultCardProps) {
   };
 
   return (
-    <div className="flex flex-col gap-6 w-full max-w-sm mx-auto">
-      {/* CAPTURE AREA - USING PURE INLINE HEX STYLES TO AVOID OKLAB FAULTS */}
+    <div className="flex flex-col gap-8 w-full max-w-[340px] sm:max-w-md mx-auto">
+      {/* CAPTURE AREA - V5.0 OVERHAUL */}
       <div 
         ref={cardRef}
-        className="relative overflow-hidden flex flex-col items-center justify-between aspect-[3.5/5] p-10 border-4 border-white pb-12 italic"
+        className="relative overflow-hidden flex flex-col items-center justify-between min-h-[580px] py-16 px-10 border-4 border-white pb-20 no-scrollbar"
         style={{ 
           backgroundColor: CARD_COLORS.card, 
           color: CARD_COLORS.white,
-          borderRadius: '48px',
-          borderColor: 'rgba(255, 255, 255, 0.1)',
+          borderRadius: '40px',
+          borderColor: 'rgba(255, 255, 255, 0.08)',
+          boxShadow: '0 30px 60px -12px rgba(0, 0, 0, 0.7)'
         }}
       >
-        {/* Background Patterns */}
-        <div className="absolute inset-0 opacity-10 pointer-events-none" 
+        {/* Animated Background Pattern */}
+        <div className="absolute inset-0 opacity-[0.03] pointer-events-none" 
              style={{ 
-               backgroundImage: `radial-gradient(${config.color} 1px, transparent 1px)`, 
-               backgroundSize: '20px 20px' 
+               backgroundImage: `radial-gradient(${config.color} 1.5px, transparent 1.5px)`, 
+               backgroundSize: '24px 24px' 
              }} />
         
-        {/* Top Header */}
-        <div className="z-10 w-full flex flex-col items-center gap-1">
-           <div className="flex items-center gap-2 px-4 py-1 rounded-full border border-white"
-                style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', borderColor: 'rgba(255, 255, 255, 0.1)' }}>
-              <Sparkles size={12} style={{ color: config.color }} />
-              <span className="text-[10px] font-black tracking-[0.3em] uppercase">Vibe Quotient Verified</span>
-           </div>
-           <h2 className="text-3xl font-black tracking-tighter" style={{ color: CARD_COLORS.white }}>
-             LoveScope
-           </h2>
+        {/* Dynamic Glows */}
+        <div className="absolute top-1/4 -right-1/4 w-[80%] h-[40%] rounded-full opacity-[0.15] blur-[120px]" 
+             style={{ background: config.color }} />
+        <div className="absolute bottom-1/4 -left-1/4 w-[60%] h-[30%] rounded-full opacity-[0.1] blur-[100px]" 
+             style={{ background: CARD_COLORS.violet }} />
+        
+        <div className="z-10 w-full flex flex-col items-center gap-4">
+          <div className="px-6 py-2 rounded-full border border-white/10"
+               style={{ background: 'rgba(255, 255, 255, 0.05)', backdropFilter: 'blur(10px)' }}>
+              <span className="text-[10px] font-black tracking-[0.4em] uppercase opacity-60">Verified Official Result</span>
+          </div>
+          <div className="mt-4">
+            <Logo size="md" />
+          </div>
         </div>
 
-        {/* Score Display */}
-        <div className="z-10 flex flex-col items-center gap-4 py-4">
-          <div className="relative">
-            <div className="text-[8rem] font-black tracking-tighter leading-none opacity-20"
-                 style={{ WebkitTextStroke: '2px white', color: 'transparent' }}>
+        {/* MIDDLE: THE SCORE (CLEANER, NO OVERLAP) */}
+        <div className="z-10 flex flex-col items-center justify-center -mt-4">
+          <div className="relative flex items-start">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="text-[11rem] font-black tracking-[-0.05em] leading-[0.8] pr-1"
+              style={{ 
+                color: CARD_COLORS.white,
+                textShadow: `0 20px 40px rgba(0,0,0,0.4)`
+              }}
+            >
               {result.score}
+            </motion.div>
+            <div className="text-4xl font-black opacity-30 mt-4 leading-none">%</div>
+          </div>
+
+          <div className="mt-8 flex flex-col items-center">
+             <div className="h-[2px] w-12 bg-gradient-to-r from-transparent via-primary/50 to-transparent mb-4" />
+             <div className="bg-white/5 px-8 py-3 rounded-2xl border border-white/10 backdrop-blur-md">
+               <h3 className="text-2xl font-black uppercase text-white tracking-tight">
+                 @{userName.toLowerCase() || "guest"}
+               </h3>
+             </div>
+          </div>
+        </div>
+
+        {/* BOTTOM: TIER & DESC (PREMIUM BOX) */}
+        <div className="z-10 w-full flex flex-col items-center gap-6 mt-4">
+          <div className="flex flex-col items-center gap-5 w-full">
+            <div 
+              className="px-10 py-5 rounded-[1.5rem] text-sm font-black uppercase tracking-[0.25em] shadow-2xl flex items-center gap-4 border-2 border-white/20 scale-105"
+              style={{ background: config.gradient, boxShadow: `0 15px 40px -10px ${config.color}66` }}
+            >
+              <TierIcon size={22} className="text-white" />
+              {result.tier}
             </div>
-            <div className="absolute inset-0 flex items-center justify-center text-8xl font-black tracking-tighter"
-                 style={{ color: CARD_COLORS.white, textShadow: `0 10px 30px rgba(0,0,0,0.5)` }}>
-              {result.score}%
+            
+            <div className="backdrop-blur-[20px] border border-white/10 rounded-[2rem] p-8 w-full text-center shadow-inner"
+                 style={{ background: 'rgba(255, 255, 255, 0.04)' }}>
+              <p className="text-[15px] font-bold leading-relaxed opacity-95 tracking-tight italic">
+                "{result.tierDescription}"
+              </p>
             </div>
           </div>
 
-          <div className="text-center mt-2 px-4">
-            <h3 className="text-3xl font-black uppercase text-white tracking-tight truncate max-w-[280px]">
-              {userName}
-            </h3>
-            <p className="text-[10px] uppercase tracking-[0.5em] opacity-40 font-bold mt-1">Player Rank</p>
+          <div className="text-[10px] font-black uppercase tracking-[0.6em] opacity-20 mt-4 italic">
+            Certified Player Energy
           </div>
         </div>
-
-        {/* Humorous Results Section */}
-        <div className="z-10 w-full flex flex-col items-center gap-4 px-2">
-          <div 
-            className="flex items-center gap-2 px-8 py-4 rounded-2xl text-sm font-black uppercase tracking-widest shadow-2xl w-full justify-center"
-            style={{ backgroundImage: config.gradient, color: CARD_COLORS.white }}
-          >
-            <TierIcon size={18} />
-            {result.tier}
-          </div>
-          
-          <div className="rounded-2xl p-4 w-full border border-white"
-               style={{ backgroundColor: 'rgba(255, 255, 255, 0.03)', borderColor: 'rgba(255, 255, 255, 0.08)' }}>
-            <p className="text-center text-[12px] font-bold leading-relaxed opacity-90">
-              "{result.tierDescription}"
-            </p>
-          </div>
-        </div>
-
-        {/* Small Tagline */}
-        <div className="z-10 flex items-center gap-2 text-[8px] font-black uppercase tracking-[0.6em] opacity-30 mt-4">
-          {config.tag}
-        </div>
-
-        {/* Glow effect for card */}
-        <div className="absolute -bottom-10 -right-10 w-32 h-32 opacity-20 rounded-full" 
-             style={{ backgroundColor: config.color, filter: 'blur(60px)' }} />
       </div>
 
       {/* ACTION BUTTONS */}
@@ -210,7 +223,7 @@ export function ResultCard({ result, userName }: ResultCardProps) {
           variant="secondary" 
           onClick={downloadImage}
           disabled={downloading}
-          className="h-16 rounded-[1.8rem] !bg-white/5 hover:!bg-white/10"
+          className="h-16 rounded-[2rem] !bg-white/5 border border-white/10 hover:!bg-white/10 transition-transform active:scale-95"
         >
           {downloading ? (
              <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }}>
@@ -219,13 +232,13 @@ export function ResultCard({ result, userName }: ResultCardProps) {
           ) : (
             <>
               <Download size={20} />
-              Save
+              Save Image
             </>
           )}
         </Button>
         <Button 
           onClick={shareResult}
-          className="h-16 rounded-[1.8rem]"
+          className="h-16 rounded-[2rem] transition-transform active:scale-95"
         >
           {copied ? (
             <>
